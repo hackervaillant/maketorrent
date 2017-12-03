@@ -1,0 +1,6 @@
+*.bin
+*.torrent
+example/*
+__pycache__/*
+
+
