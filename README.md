@@ -9,4 +9,11 @@ Currently supports :
 * private torrents
 * optionally prints magnet link
 
+Missing features :
+
+* Automatic optimal piece size
+* webseeds
+* torrent comments
+
+
 [1]: http://bittorrent.org/beps/bep_0003.html
