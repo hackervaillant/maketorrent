@@ -1,33 +1,36 @@
 #!/usr/bin/env python3
+#
+#  bdecode.py
+#
 
-d = 100
-e = 101
-i = 105
-l = 108
+import bencode
+
+D, E, I, L = 100, 101, 105, 108
+COLON = 58
 DIGITS = range(48, 58)
-colon = 58
 
-class BencodeError(ValueError):
-    pass
+
+def Bdecode(data):
+
+    return dispatch(bytearray(data))
     
 
-def bdecode(data):
-    print(data)
+def dispatch(data):
     
-    if data[0] == l:
+    if data[0] == L:
         return bdecode_list(data)
 
-    elif data[0] == d:
+    elif data[0] == D:
         return bdecode_dict(data)
 
-    elif data[0] == i:
+    elif data[0] == I:
         return bdecode_int(data)
         
     elif data[0] in DIGITS:
         return bdecode_str(data)
 
     else:
-        raise BencodeError('Invalid Bencode')
+        raise ValueError('Invalid Bencode: unknown data identifier')
     
     
 def bdecode_list(data):
@@ -35,10 +38,14 @@ def bdecode_list(data):
     ret = []
     data.pop(0)
     
-    while data[0] != e:
-        ret.append(bdecode(data))
+    while data[0] != E:
+        ret.append(dispatch(data))
     
-    data.pop(0)        
+    data.pop(0)
+            
+    if not ret:
+        raise ValueError('Invalid Bencode: Empty list')
+        
     return ret
 
 
@@ -47,17 +54,20 @@ def bdecode_dict(data):
     ret = {}
     data.pop(0)
     
-    while data[0] != e:
-        key = bdecode(data)
-        value = bdecode(data)
+    while data[0] != E:
+        key = dispatch(data)
+        value = dispatch(data)
         
-        if type(key) == str:
-            ret[key] = value
-            
-        else:
-            raise BencodeError('Dict keys must be strings')
-
+        if type(key) != str:
+            raise ValueError('Invalid Bencode: Dict keys must be strings')
+    
+        ret[key] = value
+        
     data.pop(0)
+    
+    if not ret:
+        raise ValueError('Invalid Bencode: Empty dict')
+        
     return ret
 
 
@@ -68,13 +78,13 @@ def bdecode_int(data):
     while True:
         b = data.pop(0)
 
-        if b == i:
+        if b == I:
             continue
 
         elif b in DIGITS:
             ret.append(b)
         
-        elif b == e:
+        elif b == E:
             return int(ret)
         
         
@@ -89,9 +99,12 @@ def bdecode_str(data):
         if b in DIGITS:
             ints.append(b)
             
-        elif b == colon:
+        elif b == COLON:
             length = int(ints)
             break
+    
+    if not length:
+        raise ValueError('Invalid Bencode: Empty string')
     
     for _ in range(length):
         ret.append(data.pop(0))
@@ -102,26 +115,21 @@ def bdecode_str(data):
     except UnicodeDecodeError:
         return bytes(ret)
 
-        
-
 
 def main():
     
-    # bdecode.py
+    native = {'z': ['héhé', 123, 1], 'a': 'foo', 'x': b'\x01\xff'}
+    bencoded = b'd1:a3:foo1:x2:\x01\xff1:zl6:h\xc3\xa9h\xc3\xa9i123ei1eee'
+    
+    try:
+        assert bencode.Bencode(native) == bencoded, 'encode'
+        assert Bdecode(bencoded) == native, 'decode'
 
-    TEST = b'd1:a3:foo1:x2:\x01\xff1:zl6:h\xc3\xa9h\xc3\xa9i123ei1eee'
-    TESTRESULT = {'z': ['héhé', 123, True], 'a': 'foo', 'x': b'\x01\xff'}
-
-    #~ print(bdecode(bytearray(b'i456e')))
-    #~ print(bdecode(bytearray(b'4:haha')))
-    #~ print(bdecode(bytearray(b'l4:hahae')))
-    print(bdecode(bytearray(b'l4:hah5i785ee')))
-    print(bdecode(bytearray(TEST)))
-    #~ print(bdecode(bytearray(b'ldi32e4:hahaee')))
-    #~ print(bdecode(bytearray(b'li32eeli32ee')))
-
-    return 0
-
+    except AssertionError as e:
+        return e
+        
+    else:
+        return 0
 
 
 if __name__ == '__main__':

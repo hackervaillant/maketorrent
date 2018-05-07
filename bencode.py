@@ -3,7 +3,22 @@
 #  bencode.py
 #
 
+import bdecode
 
+
+def Bencode(var):
+    vartype = type(var)
+    varfunc = {int: bencode_integer,
+               bool: bencode_boolean,
+               str: bencode_string,
+               bytes: bencode_bytes,
+               list: bencode_list,
+               tuple: bencode_list,
+               dict: bencode_dict}
+
+    return varfunc[vartype](var)
+    
+    
 def bencode_bytes(var):
     return str(len(var)).encode() + b':' + var
 
@@ -38,24 +53,20 @@ def bencode_dict(var):
     return ret + b'e'
 
 
-def Bencode(var):
-    vartype = type(var)
-    varfunc = {int: bencode_integer,
-               bool: bencode_boolean,
-               str: bencode_string,
-               bytes: bencode_bytes,
-               list: bencode_list,
-               tuple: bencode_list,
-               dict: bencode_dict}
-
-    return varfunc[vartype](var)
-
-
 def main():
-    print(Bencode({'z': ['héhé', 123, True], 'a': 'foo', 'x': b'\x01\xff'}))
 
-    return 0
+    native = {'z': ['héhé', 123, 1], 'a': 'foo', 'x': b'\x01\xff'}
+    bencoded = b'd1:a3:foo1:x2:\x01\xff1:zl6:h\xc3\xa9h\xc3\xa9i123ei1eee'
+    
+    try:
+        assert Bencode(native) == bencoded, 'encode'
+        assert bdecode.Bdecode(bencoded) == native, 'decode'
 
+    except AssertionError as e:
+        return e
+        
+    else:
+        return 0
 
 if __name__ == '__main__':
     import sys

@@ -119,7 +119,7 @@ def makePieces(files, psize):
     return pieces
 
 
-def mktorrent(path, outfile, tracker=None, piecesize=2**18, private=False, magnet=False):
+def mktorrent(path, outfile, tracker=None, piecesize=2**18, private=0, magnet=False):
     """Main function, writes metainfo file, fixed piece size for now"""
 
     # Common dict items
@@ -135,7 +135,7 @@ def mktorrent(path, outfile, tracker=None, piecesize=2**18, private=False, magne
             torrent['announce-list'] = [tracker]
 
         if private:
-            torrent['info']['private'] = True
+            torrent['info']['private'] = 1
     
     # Single file case
     if os.path.isfile(path):
